@@ -5,8 +5,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "pbxtra"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = %Q{A client library for communicating with Fonality's PBXtra Control Panel}
+    gem.description = %Q{A client library for communicating with Fonality's PBXtra Control Panel}
     gem.email = "carl.hicks@gmail.com"
     gem.homepage = "http://github.com/chicks/pbxtra"
     gem.authors = ["Carl Hicks"]

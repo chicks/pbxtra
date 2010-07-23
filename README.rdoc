@@ -1,6 +1,6 @@
 = pbxtra
 
-Description goes here.
+A client library for communicating with Fonality's PBXtra Control Panel
 
 == Note on Patches/Pull Requests
  
