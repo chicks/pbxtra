@@ -9,9 +9,11 @@ module PBXtra
 class LoginError < RuntimeError
 end
 
+class UnhandledResponse < RuntimeError
+end
+
 class Base
   
-  HOST = "cp-b.fonality.com"
   URL  = "/cpa.cgi"
   attr :url, true
   attr :user, false
@@ -20,13 +22,17 @@ class Base
   attr :debug, true
   attr :cookie, true
   
-  def initialize(user, pass, options={})
-    {:debug => false}.merge! options
+  def initialize(user, pass, opts={})
+    options = { 
+      :host   => "https://cp52.fonality.com",
+      :debug  => false
+    }.merge! opts
     @debug = options[:debug]
     
     @user = user
     @pass = pass
-    @url  = URI.parse("https://" + HOST + URL)
+    @host = options[:host]
+    @url  = URI.parse(@host + URL)
     
     # Handles http/https in url string
     @ssl  = false
@@ -37,35 +43,43 @@ class Base
     raise LoginError, "Invalid Username or Password" unless logged_in?
   end
   
+  def get(method, parameters={})
+    @url.query = wrap_url_query(method, parameters)
+    request(Net::HTTP::Get.new(@url.path + @url.query, header)).body
+  end
+  
+  def post(method=nil, parameters={}, body={})
+    @url.query = wrap_url_query(method, parameters)
+    req = Net::HTTP::Post.new(@url.path + @url.query, header)
+    req.body = wrap_body(body)
+    request(req)
+  end
+  
   # Send a request to the CP.  Send Auth information if we have it.
-  def request(method, parameters={})
+  def request(request)
     login! unless logged_in?
-    
-    # Sanitize and wrap our method + paramters
-    query = wrap(method, parameters) 
-    @url.query = query
-    
-    # Send the request
-    header   = {'Cookie' => @cookie, 'Accept-Encoding' => ''}
-    request  = Net::HTTP::Get.new(@url.path + @url.query, header)
-    response = @connection.request(request)
-
     if @debug
-      puts "Path: #{@url.path}"
-      puts response
+      puts "Request Type: #{request.class}"
+      puts "Request Path: #{@url}"
+      puts "Request Body: #{request.body}"
       puts "\n"
     end
-
+    response = @connection.request(request)
+    if @debug
+      puts "Response Header: " + response.header.to_s
+      puts "Response Body: " + response.body 
+      puts "\n"
+    end
     case response
       when Net::HTTPOK
-        raise EmptyResponse unless response.body
-        return response.body
+        return response
       when Net::HTTPUnauthorized
         login!
         request(method, parameters)
       when Net::HTTPForbidden
         raise LoginError, "Invalid Username or Password" 
-      else raise UnhandledResponse, "Can't handle response #{response}"
+      else 
+        raise UnhandledResponse, "Can't handle response #{response}"
     end
   end
 
@@ -74,13 +88,26 @@ class Base
     # Attempt authentication with PBXtra CP
     def login!
       connect! unless connected?
+      body = {
+        :forcesec => nil,
+        :do       => 'authenticate',
+        :username => @user,
+        :password => @pass
+      }
       request  = Net::HTTP::Post.new(@url.path)
-      request.body = "forcesec=&do=authenticate&username=#{@user}&password=#{@pass}"
+      request.body = wrap_body(body)
       response = @connection.request(request)
-      @cookie  = response["Set-Cookie"].split(/;/)[0]
+      
+      if response["Set-Cookie"]
+        @cookie  = response["Set-Cookie"].split(/;/)[0]
+      else
+        raise LoginError, "Invalid Username or Password"
+      end
+      
       if @debug
         puts "Cookie: #{@cookie}"
       end
+
     end
   
     # Check to see if we are logged in
@@ -106,12 +133,28 @@ class Base
       @connection.start
     end
     
-    def wrap(method, parameters)
-      body = "?do=#{method}"
+    def wrap_url_query(method, parameters={})
+      url = "?do=#{method}"
       parameters.each_pair do |k,v|
-        body << "&" + k.to_s + "=" + v.to_s
+        url << "&" + k.to_s + "=" + v.to_s
       end
-      body
+      url
+    end
+    
+    def wrap_body(parameters={})
+      body = []
+      parameters.each_pair do |k,v|
+        body << k.to_s + "=" + v.to_s
+      end
+      body.join('&')
+    end
+    
+    def header
+      if @cookie
+        {'Cookie' => @cookie, 'Accept-Encoding' => ''}
+      else
+        {}
+      end
     end
   
 end 
