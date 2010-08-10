@@ -1,0 +1,65 @@
+#! /usr/bin/env ruby
+
+require 'rubygems'
+require 'pbxtra'
+
+pbx         = PBXtra::Base.new("user", 'pass', {:debug => true})
+parameters  = {:list_ext => 'all' }
+request     = {
+  :callforward        => nil,
+  :override_phone     => 1,
+  :existing_extension => 5003,
+  :old_mailbox        => nil,
+  :old_in_blast_group => nil,
+  :existing_username  => nil,
+  :existing_password  => nil,
+  :username           => nil,
+  :password           => nil.
+  :do                 => 'ext',
+  :old_visual_only    => 0,
+  :old_department     => nil,
+  :add_ext_final_step => 1,
+  :extension          => 5002,
+  :description        => 'John',
+  :first_name         => 'Doe',
+  :last_name          => 'User',
+  :username2          => 7744_5003,
+  :password2          => 'Sugar123!',
+  :employee_email     => 'jdoe@sugarcrm.com',
+  :employee_im        => 'jdoe@yahoo.com',
+  :employee_phonenumber => '+1-555-555-5555',
+  :sms_selector       => 'cingularme.com',
+  :sms_gateway        => '15555555555@cingularme.com',
+  :phone_number       => nil,
+  :caller_id          => 14084546900,
+  :moh_dialargs       => nil,
+  :ring_seconds       => 20,
+  :old_device_id      => nil,
+  :device_id          => 322674,
+  :virt_device_id     => 280874,
+  :department         => nil,
+  :auto_logoff        => 0,
+  :press_to_accept    => 0,
+  :q_ignore_if_busy   => 1,
+  :q_call_on_qcall    => 0,
+  :q_dont_req_pass    => 0,
+  :insert_into_dir    => 1,
+  :in_company_dir     => 1,
+  :in_blast_group     => 0,
+  :in_hud             => 1,
+  :is_private         => 0,
+  :visual_only        => 0,
+  :vm_enabled         => 1,
+  :uae_ret            => 0,
+  :crm_user_id        => 'None',
+  :mailbox            => 'new',
+  :vm_pass            => 5002,
+  :vm_email           => 'jdoe@sugarcrm.com',
+  :vm_pager           => nil,
+  :vm_attach          => 1,
+  :vm_auto_delete     => 0,
+  :call_return        => 1,
+  :call_out           => 1,
+}
+
+response = pbx.post(:ext, parameters, request)
